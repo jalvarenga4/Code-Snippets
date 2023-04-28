@@ -1,0 +1,130 @@
+
+  
+  <div  class="modal modal_multi">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="close close_multi">×</span>
+        <h5>File in a PDF Modal</h5>
+      </div>
+      <h2>Hide a file in a PDF</h2>
+      <input type="file"
+             name="pdf"
+             id="pdf-file"
+             accept=".pdf">
+      <input type="file"
+             name="file-to-embed"
+             id="file-to-embed">
+  
+      <div class="btns">
+        <button id="embed">Hide in PDF</button>
+      </div>
+    
+    </div>
+  
+  </div>
+  
+  <script type="module">
+    import { PDFDocument } from 'https://cdn.skypack.dev/pdf-lib';
+  
+    const embedButton = document.getElementById('embed');
+  
+    embedButton.addEventListener('click', async () => {
+      const pdfFile = document.getElementById('pdf-file').files[0];
+      const fileToEmbed = document.getElementById('file-to-embed').files[0];
+      
+      if (!pdfFile || !fileToEmbed) {
+        alert('Please select both a PDF file and a file to embed.');
+        return;
+      }
+      
+      const inputPdfPath = pdfFile.name;
+      const hiddenFilePath = fileToEmbed.name;
+  
+      const inputPdfBytes = await pdfFile.arrayBuffer();
+      const hiddenFileBytes = await fileToEmbed.arrayBuffer();
+  
+      const pdfDoc = await PDFDocument.load(inputPdfBytes);
+  
+      const attachmentName = 'hiddenfile.txt';
+  
+      const attachment = pdfDoc.attach(hiddenFileBytes, attachmentName, {
+          mimeType: 'application/octet-stream',
+          description: 'Hidden file'
+      });
+  
+      const pdfBytesWithAttachment = await pdfDoc.save();
+  
+      const outputPdfPath = inputPdfPath.replace('.pdf', '-withembededfile.pdf');
+      const blob = new Blob([pdfBytesWithAttachment], { type: 'application/pdf' });
+      const objectUrl = URL.createObjectURL(blob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = objectUrl;
+      downloadLink.download = outputPdfPath;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+  
+      console.log(`Embedded ${hiddenFilePath} as an attachment in ${inputPdfPath}, saved to ${outputPdfPath}`);
+  
+      
+    });
+  </script>
+  
+  <div class="modal modal_multi">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="close close_multi">×</span>
+        <h5>File Shredder Modal</h5>
+      </div>
+      <h2>Shred a File</h2>
+      <input type="file"
+             name="file-to-shred"
+             id="file-to-shred">
+      <p id="shredded"></p>
+  
+      <div class="btns">
+        <button id="shred">Shred File</button>
+      </div>
+    
+    </div>
+  
+  </div>
+  
+  <script>
+    const shredButton = document.getElementById('shred');
+  
+    shredButton.addEventListener('click', async () => {
+      const fileToShred = document.getElementById('file-to-shred').files[0];
+      
+      if (!fileToShred) {
+        alert('Please select a file to shred.');
+        return;
+      }
+  
+      const reader = new FileReader();
+  
+      reader.onload = async () => {
+        const data = new Uint8Array(reader.result);
+        const length = data.length;
+        for (let i = 0; i < length; i++) {
+          data[i] = Math.floor(Math.random() * 256);
+        }
+        const blob = new Blob([data]);
+        const objectUrl = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = objectUrl;
+        downloadLink.download = fileToShred.name;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        document.getElementById('shredded').innerHTML = `${fileToShred.name} has been shredded.`;
+      }
+  
+      reader.readAsArrayBuffer(fileToShred);
+    });
+  </script>
+  
